@@ -1,184 +1,175 @@
-import React, { useEffect, useState,useRef } from "react";
-import Loader from "../components/Loader";
-import "./EditorPage.css";
-import Client from "../components/Client";
-import Editor from "../components/Editor";
-import { initSocket } from "../socket";
+import React, { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import ACTIONS from "../Action";
-import { useParams,useLocation,useNavigate,Navigate} from "react-router-dom";
+import ACTIONS from '../Action';
+import Client from '../components/Client';
+import Editor from '../components/Editor';
+import { initSocket } from '../socket';
+import {useLocation,useNavigate,Navigate,useParams} from 'react-router-dom';
+import './EditorPage.css';
 
 const EditorPage = () => {
+    const socketRef = useRef(null);
+    const codeRef = useRef(null);
+    const location = useLocation();
+    const { roomId } = useParams();
+    const reactNavigator = useNavigate();
+    const [clients, setClients] = useState([]);
+    const [user, setUser] = useState(null);
+    const [authChecked, setAuthChecked] = useState(false);
+    const [joining, setJoining] = useState(true);
 
-  const socketRef = useRef(null);
-  const codeRef = useRef(null);
-  const {roomId} = useParams();
-  const location = useLocation();
-  const reactNavigator = useNavigate();
-  const [Loading, SetLoading] = useState(true);
-  const [Clients, SetClients] = useState([
-    { socketId: 1, username: "Rakesh k" },
-    { socketId: 2, username: "Akash K" },
-  ]);
- 
-  useEffect(() => {
-    let ding = new Audio('/ding.mp3');
-    setTimeout(() => {
-      SetLoading(false);
-      ding.play();
-    }, 3000);
-  }, []);
-  
+    useEffect(() => {
+        const init = async () => {
+            try {
+                const response = await fetch('/login/success');
+                const data = await response.json();
+                if (!data.success) {
+                    reactNavigator('/');
+                    return;
+                }
+                setUser(data.user);
 
-  useEffect(()=>{
-  
-      const init = async() =>{
+                // Only initialize socket after auth success
+                socketRef.current = await initSocket();
+                socketRef.current.on('connect_error', (err) => handleErrors(err));
+                socketRef.current.on('connect_failed', (err) => handleErrors(err));
+                socketRef.current.on('connect', () => {
+                    setJoining(true);
+                });
 
-           socketRef.current = await initSocket();
-           socketRef.current.on('connect_error', (err) => handleErrors(err));
-           socketRef.current.on('connect_failed', (err) => handleErrors(err));
+                function handleErrors(e) {
+                    console.log('socket error', e);
+                    toast.error('Socket connection failed, try again later.');
+                    reactNavigator('/');
+                }
 
-           function handleErrors(e) {
-               console.log('socket error', e);
-               toast.error('Socket connection failed, try again later.');
-               reactNavigator('/');
-           }
+                socketRef.current.emit(ACTIONS.JOIN, { 
+                    roomId,
+                    username: data.user.displayName,
+                    avatar: data.user?.photos?.[0]?.value,
+                });
 
-           socketRef.current.emit(ACTIONS.JOIN,{
-
-             roomId,
-             username:location.state?.username,
-             
-           });
-
-
-            // Listening for joined event
-            socketRef.current.on(
-              ACTIONS.JOINED,
-              ({ clients, username, socketId }) => {
-                  if (username !== location.state?.username) {
-                      let Join = new Audio('/Join.mp3');
-                      toast.success(`${username} joined the room.`);
-                      Join.play();
-                      console.log(`${username} joined`);
-                  }
-                  SetClients(clients);
-                  socketRef.current.emit(ACTIONS.SYNC_CODE, {
-                      code: codeRef.current,
-                      socketId,
-                  });
-                 
-              }
-          );
- 
-          
-        //   socketRef.current.emit("typing",{
-        //     username:location.state?.username,
-        //  });
-
-
-          //Listening For Typing
-          socketRef.current.on("typing",({username})=>{
-              
-              if(username)
-              {
-                document.getElementById('type').innerHTML = `${username} is typing...`;
-                console.log(`${username} is typing`);
-              }
-              else
-              {
-                document.getElementById('type').innerHTML = '';
-                console.log(username);
-              }
-               
-          });
-
-          // Listening for disconnected
-          socketRef.current.on(
-              ACTIONS.DISCONNECTED,
-              ({ socketId, username }) => {
-                  let Left = new Audio('/Left.mp3');
-                  toast.success(`${username} left the room.`);
-                  Left.play();
-                  SetClients((prev) => {
-                      return prev.filter(
-                          (client) => client.socketId !== socketId
-                      );
-                  });
-              }
-          );
-    
-
-      };
-
-      init();
-      return () => {
-        socketRef.current.disconnect();
-        socketRef.current.off(ACTIONS.JOINED);
-        socketRef.current.off(ACTIONS.DISCONNECTED);
-    };
-
-  },[]);
-
-  async function copyRoomId() {
-    try {
-        await navigator.clipboard.writeText(roomId);
-        toast.success('Room ID has been copied to your clipboard');
-    } catch (err) {
-        toast.error('Could not copy the Room ID');
-        console.error(err);
-    }
-}
-
-function leaveRoom() {
-    reactNavigator('/');
-}
-
-
- 
-
-
-  if (!location.state) {
-    return <Navigate to="/" />;
- }
-
-  if (Loading) {
-    return <Loader />;
-  } else {
-    return (
-      <div className="mainWrap">
-        <div className="aside">
-          <div className="aside-inner">
-            <div className="logo">
-              <img className="logoImage" src="/code-sync.png" alt="logo" />
-            </div>
-            <div id="type"></div>
-            <h3>Connected</h3>
-            <div className="clientsList">
-              {Clients.map((client) => {
-                return (
-                  <Client key={client.socketId} username={client.username} />
+                // Listening for joined event
+                socketRef.current.on(
+                    ACTIONS.JOINED,
+                    ({ clients, username, socketId }) => {
+                        const audio = new Audio('/ding.mp3');
+                        try { audio.play(); } catch(e) {}
+                        if (username !== data.user.displayName) {
+                            toast.success(`${username} joined the room.`);
+                        }
+                        setClients(clients);
+                        socketRef.current.emit(ACTIONS.SYNC_CODE, {
+                            code: codeRef.current,
+                            socketId,
+                        });
+                        setJoining(false);
+                    }
                 );
-              })}
+
+                // Listening for disconnected
+                socketRef.current.on(
+                    ACTIONS.DISCONNECTED,
+                    ({ socketId, username }) => {
+                        toast.success(`${username} left the room.`);
+                        setClients((prev) => {
+                            return prev.filter(
+                                (client) => client.socketId !== socketId
+                            );
+                        });
+                    }
+                );
+            } finally {
+                setAuthChecked(true);
+            }
+        };
+        init();
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current.off(ACTIONS.JOINED);
+                socketRef.current.off(ACTIONS.DISCONNECTED);
+            }
+        };
+    }, []);
+
+    async function copyRoomId() {
+        try {
+            await navigator.clipboard.writeText(roomId);
+            toast.success('Room ID has been copied to your clipboard');
+        } catch (err) {
+            toast.error('Could not copy the Room ID');
+            console.error(err);
+        }
+    }
+
+    async function leaveRoom() {
+        try {
+            await fetch('/logout', { method: 'GET', credentials: 'include' });
+        } catch (e) {
+            // ignore network errors, still navigate away
+        } finally {
+            reactNavigator('/');
+        }
+    }
+
+    if (!authChecked) {
+        return null;
+    }
+    if (!user) {
+        return <Navigate to="/" />;
+    }
+
+    return (
+        <div className="pageWrap">
+            <div className="topBar">
+                <div className="topRight">
+                    <img className="topUserAvatar" src={user?.photos?.[0]?.value || '/logo192.png'} alt={user?.displayName} />
+                    <button className="iconTextBtn" onClick={copyRoomId}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                            <path d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 15H8V7h11v13z"></path>
+                        </svg>
+                        <span>Copy ROOM ID</span>
+                    </button>
+                    <button className="iconTextBtn danger" onClick={leaveRoom}>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                            <path d="M10 17l1.41-1.41L8.83 13H21v-2H8.83l2.58-2.59L10 7l-5 5 5 5z"></path>
+                            <path d="M3 19h6v2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6v2H3v14z"></path>
+                        </svg>
+                        <span>Leave</span>
+                    </button>
+                </div>
             </div>
-          </div>
-           <button className="btn copyBtn" onClick={copyRoomId}>COPY ROOM ID</button>
-           <button className="btn leaveBtn" onClick={leaveRoom}>Leave</button>
-        </div>
-       
-        <div className="editorwrap">
-        <Editor
+            <div className="mainWrap">
+            <div className="aside">
+                <div className="asideInner">
+                        <h3>Connected</h3>
+                    <div className="clientsList">
+                        {
+                            clients.map((client) => (
+                            <Client
+                                key={client.socketId}
+                                username={client.username}
+                                avatar={client.avatar}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div className="editorWrap">
+                {joining && <div className="connectingOverlay"><div className="spinner"/><div className="connectingText">Connecting…</div></div>}
+                <Editor
                     socketRef={socketRef}
-                    username={location.state?.username}
                     roomId={roomId}
+                    username={user.displayName}
                     onCodeChange={(code) => {
                         codeRef.current = code;
                     }}
                 />
+            </div>
+            </div>
         </div>
-      </div>
     );
-  }
 };
 
 export default EditorPage;
