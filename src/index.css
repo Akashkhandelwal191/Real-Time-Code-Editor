@@ -8,3 +8,26 @@ body {
   background: #1c1e29;
 }
 
+/* Authenticated user bar on HomePage */
+.UserBar{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #eaeaf2;
+  margin-bottom: 12px;
+}
+.UserAvatar{
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+.UserMeta{ line-height: 1.15; }
+.UserName{ font-weight: 600; font-size: 14px; }
+.UserEmail{ opacity: 0.8; font-size: 12px; }
+
