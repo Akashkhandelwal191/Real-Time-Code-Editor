@@ -1,0 +1,32 @@
+{
+    "app": {
+        "welcome": "हमारी वेबसाइट पर आपका स्वागत है!",
+        "login": "लॉगिन",
+        "logout": "लॉगआउट",
+        "greeting": "नमस्ते, {{name}}!"
+    },
+    "connected": "जुड़े हुए हैं",
+    "copy_room_id": "रूम आईडी कॉपी करें",
+    "leave": "छोड़ दें",
+    "connecting": "कनेक्ट हो रहा है...",
+    "new_btn": "नया",
+    "compiler_btn": "कंपाइलर",
+    "share_btn": "शेयर",
+    "paste_invitation_room_id": "आमंत्रण कक्ष आईडी पेस्ट करें",
+    "room_id": "कक्ष आईडी",
+    "join": "शामिल हों",
+    "if_you_dont_have_invite": "यदि आपके पास आमंत्रण नहीं है तो बनाएं",
+    "new_room": "नया कमरा",
+    "login_with_google": "Google से लॉगिन करें",
+    "created_by": "द्वारा बनाया गया",
+    "created_new_room": "एक नया कमरा बनाया",
+    "room_id_required": "रूम आईडी आवश्यक है",
+    "please_login_first": "कृपया पहले Google से लॉगिन करें",
+    "already_logged_in": "आप पहले से ही किसी अन्य डिवाइस/ब्राउज़र पर लॉग इन हैं।",
+    "auth_failed": "प्रमाणीकरण विफल। कृपया पुन प्रयास करें।",
+    "room_id_copied": "रूम आईडी आपके क्लिपबोर्ड पर कॉपी कर दी गई है",
+    "room_id_copy_error": "रूम आईडी कॉपी नहीं की जा सकी",
+    "socket_connection_failed": "सॉकेट कनेक्शन विफल, बाद में पुनः प्रयास करें।",
+    "user_joined_room": "{{username}} कमरे में शामिल हो गया है।",
+    "user_left_room": "{{username}} ने कमरा छोड़ दिया है।"
+}

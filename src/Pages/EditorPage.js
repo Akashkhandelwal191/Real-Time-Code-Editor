@@ -1,16 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import toast from 'react-hot-toast';
 import ACTIONS from '../Action';
 import Client from '../components/Client';
 import Editor from '../components/Editor';
 import { initSocket } from '../socket';
-import {useLocation,useNavigate,Navigate,useParams} from 'react-router-dom';
+import {useNavigate,Navigate,useParams} from 'react-router-dom';
 import './EditorPage.css';
 
 const EditorPage = () => {
+    const { t } = useTranslation();
     const socketRef = useRef(null);
     const codeRef = useRef(null);
-    const location = useLocation();
     const { roomId } = useParams();
     const reactNavigator = useNavigate();
     const [clients, setClients] = useState([]);
@@ -39,7 +41,7 @@ const EditorPage = () => {
 
                 function handleErrors(e) {
                     console.log('socket error', e);
-                    toast.error('Socket connection failed, try again later.');
+                    toast.error(t('socket_connection_failed'));
                     reactNavigator('/');
                 }
 
@@ -56,7 +58,7 @@ const EditorPage = () => {
                         const audio = new Audio('/ding.mp3');
                         try { audio.play(); } catch(e) {}
                         if (username !== data.user.displayName) {
-                            toast.success(`${username} joined the room.`);
+                            toast.success(t('user_joined_room', { username }));
                         }
                         setClients(clients);
                         socketRef.current.emit(ACTIONS.SYNC_CODE, {
@@ -71,7 +73,7 @@ const EditorPage = () => {
                 socketRef.current.on(
                     ACTIONS.DISCONNECTED,
                     ({ socketId, username }) => {
-                        toast.success(`${username} left the room.`);
+                        toast.success(t('user_left_room', { username }));
                         setClients((prev) => {
                             return prev.filter(
                                 (client) => client.socketId !== socketId
@@ -96,9 +98,9 @@ const EditorPage = () => {
     async function copyRoomId() {
         try {
             await navigator.clipboard.writeText(roomId);
-            toast.success('Room ID has been copied to your clipboard');
+            toast.success(t('room_id_copied'));
         } catch (err) {
-            toast.error('Could not copy the Room ID');
+            toast.error(t('room_id_copy_error'));
             console.error(err);
         }
     }
@@ -124,26 +126,32 @@ const EditorPage = () => {
         <div className="pageWrap">
             <div className="topBar">
                 <div className="topRight">
+                    <div className="language-switcher">
+                        <select onChange={(e) => i18n.changeLanguage(e.target.value)} value={i18n.language}>
+                            <option value="en">English</option>
+                            <option value="hi">हिन्दी</option>
+                        </select>
+                    </div>
                     <img className="topUserAvatar" src={user?.photos?.[0]?.value || '/logo192.png'} alt={user?.displayName} />
                     <button className="iconTextBtn" onClick={copyRoomId}>
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
                             <path d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 15H8V7h11v13z"></path>
                         </svg>
-                        <span>Copy ROOM ID</span>
+                        <span>{t('copy_room_id')}</span>
                     </button>
                     <button className="iconTextBtn danger" onClick={leaveRoom}>
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
                             <path d="M10 17l1.41-1.41L8.83 13H21v-2H8.83l2.58-2.59L10 7l-5 5 5 5z"></path>
                             <path d="M3 19h6v2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6v2H3v14z"></path>
                         </svg>
-                        <span>Leave</span>
+                        <span>{t('leave')}</span>
                     </button>
                 </div>
             </div>
             <div className="mainWrap">
             <div className="aside">
                 <div className="asideInner">
-                        <h3>Connected</h3>
+                        <h3>{t('connected')}</h3>
                     <div className="clientsList">
                         {
                             clients.map((client) => (
@@ -157,7 +165,7 @@ const EditorPage = () => {
                 </div>
             </div>
             <div className="editorWrap">
-                {joining && <div className="connectingOverlay"><div className="spinner"/><div className="connectingText">Connecting…</div></div>}
+                {joining && <div className="connectingOverlay"><div className="spinner"/><div className="connectingText">{t('connecting')}</div></div>}
                 <Editor
                     socketRef={socketRef}
                     roomId={roomId}
