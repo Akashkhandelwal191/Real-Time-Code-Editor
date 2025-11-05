@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { v4 as uuidV4 } from "uuid";
 import toast from "react-hot-toast";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -6,6 +7,7 @@ import { useState, useEffect } from "react";
 import Preloader from "../components/Preloader";
 
 const HomePage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [Loading, setLoading] = useState(true);
   const [roomId, setRoomId] = useState("");
@@ -18,9 +20,9 @@ const HomePage = () => {
           const params = new URLSearchParams(location.search);
           const err = params.get('error');
           if (err === 'already_logged_in') {
-            toast.error('You are already logged in on another device/browser.');
+            toast.error(t('already_logged_in'));
           } else if (err === 'auth_failed') {
-            toast.error('Authentication failed. Please try again.');
+            toast.error(t('auth_failed'));
           }
           const res = await fetch('/login/success');
           const data = await res.json();
@@ -40,17 +42,17 @@ const HomePage = () => {
     e.preventDefault();
     const id = uuidV4();
     setRoomId(id);
-    toast.success("Created a new room");
+    toast.success(t('created_new_room'));
   };
 
   const joinRoom = () => {
     if (!user) {
-      toast.error('Please login with Google first');
+      toast.error(t('please_login_first'));
       window.location.href = '/auth/google';
       return;
     }
     if (!roomId) {
-      toast.error("Room Id is required");
+      toast.error(t("room_id_required"));
       return;
     }
     navigate(`/editor/${roomId}`);
@@ -88,23 +90,23 @@ const HomePage = () => {
           <img src="/code-sync.png" alt="CodeImage" className="HomePageLogo" />
           {user ? (
             <>
-              <h4 className="MainLabel">Paste Invitation Room Id</h4>
+              <h4 className="MainLabel">{t('paste_invitation_room_id')}</h4>
               <div className="InputGroup">
                 <input
                   type="text"
                   className="InputBox"
-                  placeholder="Room Id"
+                  placeholder={t('room_id')}
                   onChange={(e) => setRoomId(e.target.value)}
                   value={roomId}
                   onKeyUp={handleInputEnter}
                 />
                 <button className="btn joinBtn" onClick={joinRoom}>
-                  Join
+                  {t('join')}
                 </button>
                 <span className="createInfo">
-                  if you don't have invite then create &nbsp;
+                  {t('if_you_dont_have_invite')} &nbsp;
                   <a href="#sf" className="createNewBtn" onClick={createNewRoom}>
-                    new room
+                    {t('new_room')}
                   </a>
                 </span>
               </div>
@@ -112,7 +114,7 @@ const HomePage = () => {
           ) : (
             <div className="InputGroup">
               <button className="btn googleBtn" onClick={handleGoogleLogin}>
-                Login with Google
+                {t('login_with_google')}
               </button>
             </div>
           )}
@@ -120,7 +122,7 @@ const HomePage = () => {
 
         <footer className="footer">
           <h4>
-            Created By{" "}
+            {t('created_by')}{" "}
             <a
               className="footer-name"
               href="https://github.com/Akashkhandelwal191"
